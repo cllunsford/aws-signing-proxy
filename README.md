@@ -6,8 +6,12 @@ aws-signing-proxy is a proxy service, written in go, for automatically signing r
 ## Usage
 
 ```
-./aws-signing-proxy -target https://my-cluster.es.us-west-2.aws.com
+./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com
 ```
+
+## Known Issues
+
+ * Requests cannot have a body (pretty major)
 
 ## License
 
