@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
