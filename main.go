@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"os"
-	"strings"
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
@@ -67,10 +68,14 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		//  req.ExpireTime
 		//  req.Body
 
-		// !!! Need to set the body via req.SetBufferBody([]byte) to fix signing hmac
-		//if b, err := ioutil.ReadAll(req.Body); err == nil {
-		//	awsReq.SetBufferBody(b)
-		//}
+		// Set the body in the awsReq for calculation of body Digest
+		// iotuil.ReadAll reads the Body from the stream so it can be copied into awsReq
+		// This drains the body from the original (proxied) request.
+		// To fix, we replace req.Body with a copy (NopCloser provides io.ReadCloser interface)
+		buf, _ := ioutil.ReadAll(req.Body)
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+
+		awsReq.SetBufferBody(buf)
 
 		// Setting the URL.Host manually. v4.Sign() will create the Host Header
 		//  from this value

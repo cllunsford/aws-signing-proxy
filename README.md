@@ -12,10 +12,6 @@ export AWS_REGION=<xxx>
 ./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com
 ```
 
-## Known Issues
-
- * Requests cannot have a body (pretty major)
-
 ## License
 
 MIT 2016 (c) Chris Lunsford
