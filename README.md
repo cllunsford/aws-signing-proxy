@@ -12,6 +12,25 @@ export AWS_REGION=<xxx>
 ./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com
 ```
 
+## Notes, Tips
+
+### Signature Expired
+
+If you see:
+
+`{"message":"Signature expired: 20160415T172935Z is now earlier than 20160415T174424Z (20160415T174924Z - 5 min.)"}`
+
+verify that the clock/time is in sync on the proxy host.
+
+### Kibana Forbidden index write
+
+For AWS Elasticsearch, the built-in kibana populates the .kibana index.  If you see:
+
+`ClusterBlockException[blocked by: [FORBIDDEN/8/index write (api)];]`
+
+try changing the kibana index setting to use a different index.  The marcbachmann/kibana4 docker image allows you to change this easily by setting the `KIBANA\_INDEX` variable.
+
+
 ## License
 
 MIT 2016 (c) Chris Lunsford

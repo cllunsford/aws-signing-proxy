@@ -77,10 +77,13 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 
 		awsReq.SetBufferBody(buf)
 
-		// Setting the URL.Host manually. v4.Sign() will create the Host Header
-		//  from this value
-		awsReq.HTTPRequest.URL.Scheme = target.Scheme
-		awsReq.HTTPRequest.URL.Host = target.Host
+		// Use the updated req.URL for creating the signed request
+		// We pass the full URL object to include Host, Scheme, and any params
+		awsReq.HTTPRequest.URL = req.URL
+		// These are now set above via req, but it's imperative that this remains
+		//  correctly set before calling .Sign()
+		//awsReq.HTTPRequest.URL.Scheme = target.Scheme
+		//awsReq.HTTPRequest.URL.Host = target.Host
 
 		// Perform the signing, updating awsReq in place
 		if err := awsReq.Sign(); err != nil {
