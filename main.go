@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
 	//"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -17,8 +19,9 @@ import (
 
 var targetFlag = flag.String("target", "", "target url to proxy to")
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
+var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
 
-func NewSigningProxy(target *url.URL, creds *credentials.Credentials) *httputil.ReverseProxy {
+func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		// Rewrite request to desired server host
 		req.URL.Scheme = target.Scheme
@@ -29,7 +32,12 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials) *httputil.
 		// aws.request performs more functions than we need here
 		// we only populate enough of the fields to successfully
 		// sign the request
-		config := aws.NewConfig().WithCredentials(creds).WithRegion("us-west-2")
+		config := aws.NewConfig().WithCredentials(creds)
+		if len(strings.TrimSpace(region)) > 0 {
+			config = config.WithRegion(region)
+		} else {
+			config = config.WithRegion("us-west-2")
+		}
 
 		clientInfo := metadata.ClientInfo{
 			ServiceName: "es",
@@ -94,8 +102,9 @@ func main() {
 	}
 
 	creds := credentials.NewEnvCredentials()
+	region := *regionFlag
 
-	proxy := NewSigningProxy(targetUrl, creds)
+	proxy := NewSigningProxy(targetUrl, creds, region)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
 	http.ListenAndServe(listenString, proxy)
