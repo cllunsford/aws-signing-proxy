@@ -13,10 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
@@ -114,16 +112,9 @@ func main() {
 	}
 
 	// Get credentials:
-	// Environment variables > local aws config file > ec2 role
-	sess := session.New()
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{},
-			&ec2rolecreds.EC2RoleProvider{
-				Client: ec2metadata.New(sess),
-			},
-		})
+	// Environment variables > local aws config file > remote role provider
+	// https://github.com/aws/aws-sdk-go/blob/master/aws/defaults/defaults.go#L88
+	creds := defaults.CredChain(defaults.Config(), defaults.Handlers())
 	if _, err = creds.Get(); err != nil {
 		// We couldn't get any credentials
 		fmt.Println(err)
@@ -131,12 +122,10 @@ func main() {
 	}
 
 	// Region order of precident:
-	// regionFlag > os.Getenv("AWS_REGION") > session region > "us-west-2"
+	// regionFlag > os.Getenv("AWS_REGION") > "us-west-2"
 	region := *regionFlag
 	if len(region) == 0 {
-		if region = *sess.Config.Region; len(region) == 0 {
-			region = "us-west-2"
-		}
+		region = "us-west-2"
 	}
 
 	// Start the proxy server
