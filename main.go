@@ -9,19 +9,20 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/private/signer/v4"
+	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
 var targetFlag = flag.String("target", "", "target url to proxy to")
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
 var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
 
+// NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
 func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		// Rewrite request to desired server host
@@ -33,12 +34,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		// aws.request performs more functions than we need here
 		// we only populate enough of the fields to successfully
 		// sign the request
-		config := aws.NewConfig().WithCredentials(creds)
-		if len(strings.TrimSpace(region)) > 0 {
-			config = config.WithRegion(region)
-		} else {
-			config = config.WithRegion("us-west-2")
-		}
+		config := aws.NewConfig().WithCredentials(creds).WithRegion(region)
 
 		clientInfo := metadata.ClientInfo{
 			ServiceName: "es",
@@ -51,7 +47,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		}
 
 		handlers := request.Handlers{}
-		handlers.Sign.PushBack(v4.Sign)
+		handlers.Sign.PushBack(v4.SignSDKRequest)
 
 		// Do we need to use request.New ? Or can we create a raw Request struct and
 		//  jus swap out the HTTPRequest with our own existing one?
@@ -104,15 +100,36 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 func main() {
 	flag.Parse()
 
-	targetUrl, err := url.Parse(*targetFlag)
+	// Validate target URL
+	if len(*targetFlag) == 0 {
+		fmt.Println("Requires target URL to proxy to. Please use the -target flag")
+		return
+	}
+	targetURL, err := url.Parse(*targetFlag)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
-	creds := credentials.NewEnvCredentials()
-	region := *regionFlag
+	// Get credentials:
+	// Environment variables > local aws config file > remote role provider
+	// https://github.com/aws/aws-sdk-go/blob/master/aws/defaults/defaults.go#L88
+	creds := defaults.CredChain(defaults.Config(), defaults.Handlers())
+	if _, err = creds.Get(); err != nil {
+		// We couldn't get any credentials
+		fmt.Println(err)
+		return
+	}
 
-	proxy := NewSigningProxy(targetUrl, creds, region)
+	// Region order of precident:
+	// regionFlag > os.Getenv("AWS_REGION") > "us-west-2"
+	region := *regionFlag
+	if len(region) == 0 {
+		region = "us-west-2"
+	}
+
+	// Start the proxy server
+	proxy := NewSigningProxy(targetURL, creds, region)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
 	http.ListenAndServe(listenString, proxy)
