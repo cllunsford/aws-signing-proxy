@@ -9,7 +9,12 @@ aws-signing-proxy is a proxy service, written in go, for automatically signing r
 export AWS_ACCESS_KEY_ID=<xxx>
 export AWS_SECRET_ACCESS_KEY=<xxx>
 export AWS_REGION=<xxx>
+export LOGIN_USER=<xxx>
+export LOGIN_HASHED_PASSWORD=<xxx>
 ./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com
+
+-target can also be passed as env var: export TARGET_URL=<xxx>
+
 ```
 ### Credential chain
 
