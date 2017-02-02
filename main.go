@@ -22,6 +22,7 @@ import (
 var targetFlag = flag.String("target", os.Getenv("AWS_ES_TARGET"), "target url to proxy to")
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
 var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
+var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
 
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
 func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
@@ -99,7 +100,8 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 	}
 
 	return &httputil.ReverseProxy{
-		Director: director,
+		Director:      director,
+		FlushInterval: *flushInterval,
 	}
 }
 
