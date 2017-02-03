@@ -4,8 +4,7 @@ services:
 script:
 - make build
 after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; docker push cllunsford/aws-signing-proxy:latest; fi
-- if [ -n "$TRAVIS_TAG" ]; then docker tag cllunsford/aws-signing-proxy:latest cllunsford/aws-signing-proxy:${TRAVIS_TAG}; docker push cllunsford/aws-signing-proxy:${TRAVIS_TAG}; fi
+- if [ -n "$TRAVIS_TAG" ]; then docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; docker tag cllunsford/aws-signing-proxy:latest cllunsford/aws-signing-proxy:${TRAVIS_TAG}; docker push cllunsford/aws-signing-proxy:latest; docker push cllunsford/aws-signing-proxy:${TRAVIS_TAG}; fi
 deploy:
   provider: releases
   api_key:
