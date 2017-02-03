@@ -11,6 +11,7 @@ deploy:
   api_key:
     secure: pe3/gRQ52p78g4D4f7l5rtmaGZlHAAoiZD94LUoRcHmy4EiZmXfNkdpdxJN6TbcnApqGPu/8UT/oW6byO38KY+zFkbY1XByJ9h3BJ6a43YdEICaEeEsyWPNirb+y+ljMoVyPugxkg32jb6rOHm506mIpJomjRvw1bKvLdPsa/o08N5fPWqlvYoJW6oY9VIMbjFoQtU1RpyLuGMEX9eOgn4fOxpEjBSi6u3N6/J6rMuP+L0RwdbE9a4ipi5rfwXRtdHicevrheZpxFAABuj9p6KUipzU9/tq4eyvYdwRtDujc4WzYNsNDVxg4ng0peF29RrzWQHbhCn7+XXTbFBuw7lDfXF+d0tkfQRDmy42EDkP6uprzaP3fxTyAVBlrnWwMEsNPsvBFEjRTUYWWharh2XMLedxGaSKK4G+7HpTOiLytTOo0EM5IoFTPvRcr+CEd4ZygAs/nsaz+eoqDS3zEqLFpQ9GpQumsufyigMpQ3xcDGUiunnmpnUXkgS3zvHOqGmyFQS2OcmL4MrZ4WcEuf4X6Oi4QRRNRFg2ruztQvCxbipD+KTRPEv/ltxElshtZZh3bQ7isQV4CjxJby9HEPTumwpkNf2nex6Yowy5PPY4awt5L9l3ULsJBJM/SkrJChIdlgImTn8oX19NiNjWt/DtNQXhoI3O9/zYnT0sYs7U=
   file: _bin/aws-signing-proxy
+  skip_cleanup: true
   on:
     repo: cllunsford/aws-signing-proxy
     tags: true
