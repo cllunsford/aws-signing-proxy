@@ -68,10 +68,12 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		// iotuil.ReadAll reads the Body from the stream so it can be copied into awsReq
 		// This drains the body from the original (proxied) request.
 		// To fix, we replace req.Body with a copy (NopCloser provides io.ReadCloser interface)
-		buf, _ := ioutil.ReadAll(req.Body)
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+		if req.Body != nil {
+			buf, _ := ioutil.ReadAll(req.Body)
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 
-		awsReq.SetBufferBody(buf)
+			awsReq.SetBufferBody(buf)
+		}
 
 		// Use the updated req.URL for creating the signed request
 		// We pass the full URL object to include Host, Scheme, and any params
