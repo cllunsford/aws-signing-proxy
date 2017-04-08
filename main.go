@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -69,7 +70,10 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		// This drains the body from the original (proxied) request.
 		// To fix, we replace req.Body with a copy (NopCloser provides io.ReadCloser interface)
 		if req.Body != nil {
-			buf, _ := ioutil.ReadAll(req.Body)
+			buf, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				log.Printf("error reading request body: %v\n", err)
+			}
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 
 			awsReq.SetBufferBody(buf)
@@ -85,7 +89,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 
 		// Perform the signing, updating awsReq in place
 		if err := awsReq.Sign(); err != nil {
-			fmt.Println(err)
+			log.Printf("error signing: %v\n", err)
 		}
 
 		// Write the Signed Headers into the Original Request
