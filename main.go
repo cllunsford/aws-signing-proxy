@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
@@ -23,6 +24,7 @@ var targetFlag = flag.String("target", os.Getenv("AWS_ES_TARGET"), "target url t
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
 var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
 var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
+var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
 
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
 func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
@@ -99,9 +101,13 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		}
 	}
 
+	transport := http.DefaultTransport.(*http.Transport)
+	transport.IdleConnTimeout = *idleConnTimeout
+
 	return &httputil.ReverseProxy{
 		Director:      director,
 		FlushInterval: *flushInterval,
+		Transport:     transport,
 	}
 }
 
