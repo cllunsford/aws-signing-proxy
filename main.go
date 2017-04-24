@@ -18,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
-var targetFlag = flag.String("target", "", "target url to proxy to")
+var targetFlag = flag.String("target", os.Getenv("AWS_ES_TARGET"), "target url to proxy to")
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
 var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
 
