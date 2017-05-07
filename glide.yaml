@@ -1,0 +1,11 @@
+package: github.com/coreos/aws-signing-proxy
+import:
+- package: github.com/aws/aws-sdk-go
+  version: ^1.8.0
+  subpackages:
+  - aws
+  - aws/client/metadata
+  - aws/credentials
+  - aws/defaults
+  - aws/request
+  - aws/signer/v4
