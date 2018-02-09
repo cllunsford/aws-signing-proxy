@@ -21,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
+var serviceName = flag.String("service-name", os.Getenv("AWS_SERVICE_NAME"), "service-name to use")
 var targetFlag = flag.String("target", os.Getenv("AWS_ES_TARGET"), "target url to proxy to")
 var portFlag = flag.Int("port", 8080, "listening port for proxy")
 var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
@@ -42,8 +43,12 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		// sign the request
 		config := aws.NewConfig().WithCredentials(creds).WithRegion(region)
 
+		if serviceName == nil {
+			*serviceName = "es"
+		}
+
 		clientInfo := metadata.ClientInfo{
-			ServiceName: "es",
+			ServiceName: *serviceName,
 		}
 
 		operation := &request.Operation{
