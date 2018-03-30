@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
@@ -141,7 +141,10 @@ func main() {
 	// Get credentials:
 	// Environment variables > local aws config file > remote role provider
 	// https://github.com/aws/aws-sdk-go/blob/master/aws/defaults/defaults.go#L88
-	creds := defaults.CredChain(defaults.Config(), defaults.Handlers())
+  sess := session.Must(session.NewSessionWithOptions(session.Options{
+	  SharedConfigState: session.SharedConfigEnable,
+  }))
+  creds := sess.Config.Credentials
 	if _, err = creds.Get(); err != nil {
 		// We couldn't get any credentials
 		fmt.Println(err)
