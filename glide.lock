@@ -1,8 +1,8 @@
-hash: 65488f40c649f294622642ec8dc751d46f5931db5ec1304e177907f465945ba0
-updated: 2017-05-03T10:29:13.070353126-07:00
+hash: 3435e6fad1704a971ccc3e5fe58ac71e1d5a0760d12a30a6a1ae505d529f5811
+updated: 2018-03-29T13:25:08.566673-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 0dbc446aca87aebb6e0a24509b59bafc0e3ec0ae
+  version: bb206ce0d6a50da7807694a823aed5c601c57ce0
   subpackages:
   - aws
   - aws/awserr
@@ -18,9 +18,13 @@ imports:
   - aws/endpoints
   - aws/request
   - aws/signer/v4
+  - internal/sdkio
+  - internal/sdkrand
+  - internal/shareddefaults
+  - private/protocol
   - private/protocol/rest
 - name: github.com/go-ini/ini
-  version: 2e44421e256d82ebbf3d4d4fcabe8930b905eff3
+  version: 6ecc596bd756a16c6e93e4ef9225ecdb9f54ed2c
 - name: github.com/jmespath/go-jmespath
-  version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
+  version: c2b33e8439af944379acbdd9c3a5fe0bc44bd8a5
 testImports: []
