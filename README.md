@@ -38,6 +38,16 @@ For AWS Elasticsearch, the built-in kibana populates the .kibana index.  If you 
 
 try changing the kibana index setting to use a different index.  The [marcbachmann/kibana4](https://github.com/marcbachmann/dockerfile-kibana4) docker image allows you to change this easily by setting the ```KIBANA_INDEX``` environment variable.
 
+## Building
+
+If you have go installed, you can build and install the binary natively:
+
+```
+go install
+```
+
+The Makefile is used for the production build in travis.  It requires [docker](https://docs.docker.com/install/) to be installed locally and then you can run: `make build`.
+
 ## License
 
 MIT 2018 (c) Chris Lunsford
