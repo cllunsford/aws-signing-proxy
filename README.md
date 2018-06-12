@@ -20,6 +20,16 @@ AWS credentials are looked up in the following order:
  2. The `~/.aws/credentials` config file's default profile
  3. Any [IAM instance profile role](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) assigned to the instance.
 
+## Building
+
+If you have go installed, you can build and install the binary natively:
+
+```
+go install
+```
+
+The Makefile is used for the production build in travis.  It requires [docker](https://docs.docker.com/install/) to be installed locally and then you can run: `make build`.
+
 ## Notes, Tips
 
 ### Signature Expired
@@ -37,16 +47,6 @@ For AWS Elasticsearch, the built-in kibana populates the .kibana index.  If you 
 `ClusterBlockException[blocked by: [FORBIDDEN/8/index write (api)];]`
 
 try changing the kibana index setting to use a different index.  The [marcbachmann/kibana4](https://github.com/marcbachmann/dockerfile-kibana4) docker image allows you to change this easily by setting the ```KIBANA_INDEX``` environment variable.
-
-## Building
-
-If you have go installed, you can build and install the binary natively:
-
-```
-go install
-```
-
-The Makefile is used for the production build in travis.  It requires [docker](https://docs.docker.com/install/) to be installed locally and then you can run: `make build`.
 
 ## License
 
