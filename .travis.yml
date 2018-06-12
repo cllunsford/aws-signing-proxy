@@ -7,7 +7,7 @@ services:
 script:
 - go get -u github.com/kardianos/govendor
 - govendor sync
-- go build -v
+- GOOS=linux CGO_ENABLED=0 go build -v
 - make dockbuild
 after_success:
 - if [ -n "$TRAVIS_TAG" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
