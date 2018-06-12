@@ -38,7 +38,6 @@ For AWS Elasticsearch, the built-in kibana populates the .kibana index.  If you 
 
 try changing the kibana index setting to use a different index.  The [marcbachmann/kibana4](https://github.com/marcbachmann/dockerfile-kibana4) docker image allows you to change this easily by setting the ```KIBANA_INDEX``` environment variable.
 
-
 ## License
 
-MIT 2016 (c) Chris Lunsford
+MIT 2018 (c) Chris Lunsford
