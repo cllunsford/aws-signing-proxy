@@ -2,7 +2,7 @@ name=aws-signing-proxy
 registry=cllunsford
 gitrepo=github.com/cllunsford
 tag=latest
-go_ver=1.9
+go_ver=1.10
 
 default:
 	@echo ""
