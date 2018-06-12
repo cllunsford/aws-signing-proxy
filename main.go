@@ -27,6 +27,7 @@ var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for 
 var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
 var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
 var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
+var serviceFlag = flag.String("service", "es", "AWS Service.")
 
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
 func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
@@ -43,7 +44,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		config := aws.NewConfig().WithCredentials(creds).WithRegion(region)
 
 		clientInfo := metadata.ClientInfo{
-			ServiceName: "es",
+			ServiceName: *serviceFlag,
 		}
 
 		operation := &request.Operation{
