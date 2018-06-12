@@ -28,7 +28,16 @@ If you have go installed, you can build and install the binary natively:
 go install
 ```
 
-The Makefile is used for the production build in travis.  It requires [docker](https://docs.docker.com/install/) to be installed locally and then you can run: `make build`.
+The Makefile is used for the production build in travis.  It builds the binary in a [docker](https://docs.docker.com/install/) container. After installing docker:
+
+```
+make gobuild   # creates the binary
+make dockbuild # creates a docker image with the binary
+
+or
+
+make build     # does both
+```
 
 ## Notes, Tips
 
