@@ -38,8 +38,6 @@ type AppConfig struct {
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
 func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
-		fmt.Println(appConfig)
-
 		// Rewrite request to desired server host
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
