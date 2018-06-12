@@ -4,14 +4,32 @@ aws-signing-proxy
 
 aws-signing-proxy is a proxy service, written in go, for automatically signing requests made to AWS endpoints.  It leverages the aws-sdk-go library to sign requests to arbitrary URLs in AWS.  I wrote it to connect a kibana instance to an AWS Elasticsearch cluster using an IAM role instead of hard-coding IPs in the access policy.  Other uses may exist.
 
+Docker image: https://hub.docker.com/r/cllunsford/aws-signing-proxy/
+
 ## Usage
 
 ```
 export AWS_ACCESS_KEY_ID=<xxx>
 export AWS_SECRET_ACCESS_KEY=<xxx>
 export AWS_REGION=<xxx>
-./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com [-port 8080]
+export AWS_PROFILE=<xxx>  # Optional
+./aws-signing-proxy -target https://search-my-cluster.us-west-2.es.amazonaws.com [-port 8080] [-service es]
 ```
+
+Flags
+
+General:
+
+ * `-target` - AWS service to send requests to
+ * `-port` - Port for the proxy to LISTEN on (will forward to whatever port you specify in target)
+ * `-service` - The AWS service type you are sending to, default: `es`.  This is required for the signing process.
+
+HTTP Connection Tuning:
+
+ * `-flush-interval` - [ReverseProxy](https://golang.org/pkg/net/http/httputil/#ReverseProxy) FlushInterval, default: `0`
+ * `-idle-conn-timeout` - [Transport](https://golang.org/pkg/net/http/#Transport) Idle Connection Timeout, default: `90s`
+ * `-dial-timeout` - [Transport](https://golang.org/pkg/net/http/#Transport) Dial Timeout, default: `30s`
+
 ### Credential chain
 
 AWS credentials are looked up in the following order:
