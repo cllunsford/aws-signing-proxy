@@ -2,3 +2,5 @@ aws-signing-proxy
 _bin/
 _pkg/
 _src/
+vendor/*
+!vendor/vendor.json

@@ -19,19 +19,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
+	"github.com/kelseyhightower/envconfig"
 )
 
-var targetFlag = flag.String("target", os.Getenv("AWS_ES_TARGET"), "target url to proxy to")
-var portFlag = flag.Int("port", 8080, "listening port for proxy")
-var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
-var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
-var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
-var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
-var serviceFlag = flag.String("service", "es", "AWS Service.")
+type EnvConfig struct {
+	Target  string
+	Port    int    `default:"8080"`
+	Service string `default:"es"`
+}
+
+type AppConfig struct {
+	Service         string
+	FlushInterval   time.Duration
+	IdleConnTimeout time.Duration
+	DialTimeout     time.Duration
+}
 
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
-func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string) *httputil.ReverseProxy {
+func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
+		fmt.Println(appConfig)
+
 		// Rewrite request to desired server host
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
@@ -44,7 +52,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		config := aws.NewConfig().WithCredentials(creds).WithRegion(region)
 
 		clientInfo := metadata.ClientInfo{
-			ServiceName: *serviceFlag,
+			ServiceName: appConfig.Service,
 		}
 
 		operation := &request.Operation{
@@ -109,34 +117,56 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   *dialTimeout,
+			Timeout:   appConfig.DialTimeout,
 			KeepAlive: 30 * time.Second,
 			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:        100,
-		IdleConnTimeout:     *idleConnTimeout,
+		IdleConnTimeout:     appConfig.IdleConnTimeout,
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
 	return &httputil.ReverseProxy{
 		Director:      director,
-		FlushInterval: *flushInterval,
+		FlushInterval: appConfig.FlushInterval,
 		Transport:     transport,
 	}
 }
 
 func main() {
+	// Adding envconfig to allow setting key vars via ENV
+	var e EnvConfig
+	if err := envconfig.Process("ASP", &e); err != nil {
+		log.Fatal(err.Error())
+	}
+	if val, ok := os.LookupEnv("AWS_ES_TARGET"); ok {
+		e.Target = val
+	}
+
+	var targetFlag = flag.String("target", e.Target, "target url to proxy to")
+	var portFlag = flag.Int("port", e.Port, "listening port for proxy")
+	var serviceFlag = flag.String("service", e.Service, "AWS Service.")
+	var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
+	var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
+	var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
+	var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
+
 	flag.Parse()
+
+	appC := AppConfig{
+		Service:         *serviceFlag,
+		FlushInterval:   *flushInterval,
+		IdleConnTimeout: *idleConnTimeout,
+		DialTimeout:     *dialTimeout,
+	}
 
 	// Validate target URL
 	if len(*targetFlag) == 0 {
-		fmt.Println("Requires target URL to proxy to. Please use the -target flag")
-		return
+		log.Fatal("Requires target URL to proxy to. Please use the -target flag")
 	}
 	targetURL, err := url.Parse(*targetFlag)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err.Error())
 	}
 
 	// Get credentials:
@@ -157,7 +187,7 @@ func main() {
 	}
 
 	// Start the proxy server
-	proxy := NewSigningProxy(targetURL, creds, region)
+	proxy := NewSigningProxy(targetURL, creds, region, appC)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
 	http.ListenAndServe(listenString, proxy)

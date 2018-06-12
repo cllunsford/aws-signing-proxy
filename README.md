@@ -20,8 +20,8 @@ Flags
 
 General:
 
- * `-target` - AWS service to send requests to
- * `-port` - Port for the proxy to LISTEN on (will forward to whatever port you specify in target)
+ * `-target` - AWS service to send requests to.  Required.
+ * `-port` - Port for the proxy to LISTEN on (will forward to whatever port you specify in target), default: `8080`.
  * `-service` - The AWS service type you are sending to, default: `es`.  This is required for the signing process.
 
 HTTP Connection Tuning:
