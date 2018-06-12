@@ -1,28 +1,24 @@
 language: go
-
 go:
-  - "1.10.x"
-
+- 1.10.x
 sudo: required
-
 services:
-  - docker
-
+- docker
 script:
-  - go get -u github.com/kardianos/govendor
-  - govendor sync
-  - go build -v
-  - make dockbuild
-
+- go get -u github.com/kardianos/govendor
+- govendor sync
+- go build -v
+- make dockbuild
 after_success:
-- if [ -n "$TRAVIS_TAG" ]; then docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; docker tag cllunsford/aws-signing-proxy:latest cllunsford/aws-signing-proxy:${TRAVIS_TAG}; docker push cllunsford/aws-signing-proxy:latest; docker push cllunsford/aws-signing-proxy:${TRAVIS_TAG}; fi
-
+- if [ -n "$TRAVIS_TAG" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+  docker tag cllunsford/aws-signing-proxy:latest cllunsford/aws-signing-proxy:${TRAVIS_TAG};
+  docker push cllunsford/aws-signing-proxy:latest; docker push cllunsford/aws-signing-proxy:${TRAVIS_TAG};
+  fi
 deploy:
   provider: releases
   api_key:
-    secure: pe3/gRQ52p78g4D4f7l5rtmaGZlHAAoiZD94LUoRcHmy4EiZmXfNkdpdxJN6TbcnApqGPu/8UT/oW6byO38KY+zFkbY1XByJ9h3BJ6a43YdEICaEeEsyWPNirb+y+ljMoVyPugxkg32jb6rOHm506mIpJomjRvw1bKvLdPsa/o08N5fPWqlvYoJW6oY9VIMbjFoQtU1RpyLuGMEX9eOgn4fOxpEjBSi6u3N6/J6rMuP+L0RwdbE9a4ipi5rfwXRtdHicevrheZpxFAABuj9p6KUipzU9/tq4eyvYdwRtDujc4WzYNsNDVxg4ng0peF29RrzWQHbhCn7+XXTbFBuw7lDfXF+d0tkfQRDmy42EDkP6uprzaP3fxTyAVBlrnWwMEsNPsvBFEjRTUYWWharh2XMLedxGaSKK4G+7HpTOiLytTOo0EM5IoFTPvRcr+CEd4ZygAs/nsaz+eoqDS3zEqLFpQ9GpQumsufyigMpQ3xcDGUiunnmpnUXkgS3zvHOqGmyFQS2OcmL4MrZ4WcEuf4X6Oi4QRRNRFg2ruztQvCxbipD+KTRPEv/ltxElshtZZh3bQ7isQV4CjxJby9HEPTumwpkNf2nex6Yowy5PPY4awt5L9l3ULsJBJM/SkrJChIdlgImTn8oX19NiNjWt/DtNQXhoI3O9/zYnT0sYs7U=
-  file: _bin/aws-signing-proxy
-  skip_cleanup: true
+    secure: RQm9GudpGXMGE+p3F5AN2oBVLNdzK91SRtUmlxmAgtgiKWp3kNwpQCTAKxajQE2JT/B37rt1+JD2Dw/gUuAQGtZBrko8rHA8HZQjwFyslNoMKWQmKXnWL+VqHD0+cL82pxGrHEc1Whi4PkDFyE4HVsY1rSjZIQmisRsCp1mRLpDoStFRyyk1bFjoXmrWl9A4Gv+jaNaKDerCywfUSsDbdklgWIMqSFqknjdFvnAcZ7wMOSI7BYzuAXncutEfH0g8yUbNB54WcbcDhXym8ZtfLuWzmAnG8URwPbBhWPUPTvP9j/17GnsiaRcy4pnx5VO/eWhViORLk7unoRz3/Z01rn+wph7cufMCrHcJ3b6y/jLfKiH7gvoB1te62EixzXxIIuDw2oI2ITrCzocCGY/v9SW7DtfdG9CXSj7+jLCmXt+X4p+80KonCpORwM2QDmPtTSkR56p3qsbXKuuFY7czfYkhCOgS/EhIeLML4h2dnsju1Q6pvBNdDo3OgeFN2cBC29Lqb7i8g9Oj6s/IqmS0YYbs9JJotVpOvQa/GvCeOcJXGahr1+RbRl0ERx+OyxhIjvvPYQVk7VKbN4FrMQBJRPUmQKEkQbNAD/iFQFl7az2hRlqjp8+VX5Q2k+FvKmCm/w4zlkwVY1ek7RD6SQgpYM12/XpP7UoV5N6qwja6XT0=
+  file: aws-signing-proxy
   on:
     repo: cllunsford/aws-signing-proxy
     tags: true
