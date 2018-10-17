@@ -35,6 +35,7 @@ gobuild:
 	-e GOOS=linux  \
 	golang:${go_ver} \
 	bash -c "go get ./src/${gitrepo}/${name}/...; chown -R $$(id -u):$$(id -g) ./"
+	ln -f _bin/aws-signing-proxy
 
 clean:
 	rm -rf ./_* ca-certificates.crt aws-signing-proxy
