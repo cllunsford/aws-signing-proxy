@@ -1,0 +1,11 @@
+[[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "v1.17.3"
+
+[[constraint]]
+  name = "github.com/kelseyhightower/envconfig"
+  version = "v1.3.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true

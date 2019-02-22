@@ -1,14 +1,10 @@
-## aws-signing-proxy
-FROM scratch
-MAINTAINER Chris Lunsford <cllunsford@gmail.com>
+FROM alpine:3.7
+MAINTAINER uSwitch Cloud <cloud@uswitch.com>
 
-# Add ca-certificates.crt for https
-ADD ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN  apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
-# Add executable
-ADD aws-signing-proxy /
+COPY bin/aws-signing-proxy-linux-amd64 /aws-signing-proxy
 
-# Default listening port
 EXPOSE 8080
 
 ENTRYPOINT ["/aws-signing-proxy"]
