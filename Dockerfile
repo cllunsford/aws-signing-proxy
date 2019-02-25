@@ -1,14 +1,8 @@
-## aws-signing-proxy
 FROM scratch
-MAINTAINER Chris Lunsford <cllunsford@gmail.com>
+MAINTAINER uSwitch Cloud <cloud@uswitch.com>
 
-# Add ca-certificates.crt for https
-ADD ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY bin/aws-signing-proxy-linux-amd64 /aws-signing-proxy
 
-# Add executable
-ADD aws-signing-proxy /
-
-# Default listening port
 EXPOSE 8080
 
 ENTRYPOINT ["/aws-signing-proxy"]

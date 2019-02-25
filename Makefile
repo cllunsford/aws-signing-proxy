@@ -1,41 +1,28 @@
-name=aws-signing-proxy
-registry=cllunsford
-gitrepo=github.com/cllunsford
-tag=latest
-go_ver=1.10
+ARCH = amd64
+BIN  = bin/aws-signing-proxy
+BIN_LINUX  = $(BIN)-linux-$(ARCH)
+BIN_DARWIN = $(BIN)-darwin-$(ARCH)
 
-default:
-	@echo ""
-	@echo "make build:"
-	@echo "	compiles the aws-signing-proxy app and builds the docker image"
-	@echo "make gobuild:"
-	@echo "	compiles the aws-signing-proxy app (binary located in ./_bin)"
-	@echo "make dockbuild:"
-	@echo "	builds the docker image"
-	@echo "make clean:"
-	@echo "	removes all temporary files and build artifacts"
+SOURCES := $(shell find . -iname '*.go')
 
+.PHONY: test clean all
 
-build: gobuild dockbuild
+all: build-darwin build-linux
 
-dockbuild:
-	[ -e ca-certificates.crt ] || wget https://curl.haxx.se/ca/cacert.pem -O ca-certificates.crt
-	docker build -t ${registry}/${name}:${tag} .
+build-darwin: $(SOURCES)
+	GOARCH=$(ARCH) GOOS=darwin go build -o $(BIN_DARWIN)
 
-gobuild:
-	# copy src
-	mkdir -p _src/${gitrepo}/${name}
-	cp -r main.go _src/${gitrepo}/${name}
-	# compile
-	docker run \
-	-v `pwd`/_pkg:/go/pkg \
-	-v `pwd`/_bin:/go/bin \
-	-v `pwd`/_src:/go/src \
-	-e CGO_ENABLED=0 \
-	-e GOOS=linux  \
-	golang:${go_ver} \
-	bash -c "go get ./src/${gitrepo}/${name}/...; chown -R $$(id -u):$$(id -g) ./"
-	ln -f _bin/aws-signing-proxy
+build-linux: $(SOURCES)
+	GOARCH=$(ARCH) GOOS=linux CGO_ENABLED=0 go build -o $(BIN_LINUX)
+
+test: $(SOURCES)
+	go test -v -cover $(shell go list ./... | grep -v /vendor)
+
+bench: $(SOURCES)
+	go test -run=XX -bench=. $(shell go list ./... | grep -v /vendor)
+
+docker: Dockerfile $(BIN_LINUX)
+	docker image build -t registry.usw.co/cloud/aws-signing-proxy:latest .
 
 clean:
-	rm -rf ./_* ca-certificates.crt aws-signing-proxy
+	rm -rf bin/

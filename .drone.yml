@@ -1,0 +1,36 @@
+workspace:
+  base: /go
+  path: src/github.com/uswitch/aws-signing-proxy
+
+pipeline:
+  test:
+    image: golang:1.10
+    commands:
+      - make test
+
+  build:
+    image: golang:1.10
+    commands:
+      - make build-linux
+
+  docker-latest:
+    image: plugins/docker
+    repo: quay.io/uswitch/aws-signing-proxy
+    registry: quay.io
+    secrets: [ docker_username, docker_password ]
+    tags:
+      - latest
+      - ${DRONE_COMMIT_SHA}
+    when:
+      event: push
+      branch: master
+
+  docker-tagged:
+    image: plugins/docker
+    repo: quay.io/uswitch/aws-signing-proxy
+    registry: quay.io
+    secrets: [ docker_username, docker_password ]
+    auto_tag: true
+    when:
+      event: tag
+      branch: master
