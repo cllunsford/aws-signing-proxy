@@ -56,7 +56,7 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		operation := &request.Operation{
 			Name:       "",
 			HTTPMethod: req.Method,
-			HTTPPath:   req.URL.Path,
+			HTTPPath:   req.URL.EscapedPath(),
 		}
 
 		handlers := request.Handlers{}
