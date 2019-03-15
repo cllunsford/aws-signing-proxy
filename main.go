@@ -18,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/signer/v4"
+	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -26,6 +26,7 @@ type EnvConfig struct {
 	Target  string
 	Port    int    `default:"8080"`
 	Service string `default:"es"`
+	Listen  string `default:"127.0.0.1"`
 }
 
 type AppConfig struct {
@@ -143,6 +144,7 @@ func main() {
 
 	var targetFlag = flag.String("target", e.Target, "target url to proxy to")
 	var portFlag = flag.Int("port", e.Port, "listening port for proxy")
+	var listenFlag = flag.String("listen", e.Listen, "listen to this address. Set empty string for all")
 	var serviceFlag = flag.String("service", e.Service, "AWS Service.")
 	var regionFlag = flag.String("region", os.Getenv("AWS_REGION"), "AWS region for credentials")
 	var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
@@ -186,7 +188,7 @@ func main() {
 
 	// Start the proxy server
 	proxy := NewSigningProxy(targetURL, creds, region, appC)
-	listenString := fmt.Sprintf(":%v", *portFlag)
+	listenString := fmt.Sprintf("%s:%d", *listenFlag, *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
 	http.ListenAndServe(listenString, proxy)
 }
