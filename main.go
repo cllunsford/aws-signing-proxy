@@ -188,5 +188,5 @@ func main() {
 	proxy := NewSigningProxy(targetURL, creds, region, appC)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
-	http.ListenAndServe(listenString, proxy)
+	log.Fatal(http.ListenAndServe(listenString, proxy))
 }
