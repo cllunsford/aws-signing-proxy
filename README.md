@@ -22,6 +22,7 @@ General:
 
  * `-target` - AWS service to send requests to.  Required.
  * `-port` - Port for the proxy to LISTEN on (will forward to whatever port you specify in target), default: `8080`.
+ * `-listen` - TCP address to listen on, e.g. `:8080` or `127.0.0.1:8080`. Optional. When specified, -port is ignored.
  * `-service` - The AWS service type you are sending to, default: `es`.  This is required for the signing process.
 
 HTTP Connection Tuning:
