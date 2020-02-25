@@ -63,7 +63,7 @@ jobs:
           name: Adding Ingress rule
           command: |
             aws eks --region us-east-1 update-kubeconfig --name admetricks
-            /ingress_rules_editor -ingress=admetricks -service=${APP_NAME}--web -host=${APP_NAME}.eks.admetricks.net -port=80 -y add
+            /ingress_rules_editor -ingress=admetricks -service=${APP_NAME}--pod -host=${APP_NAME}.eks.admetricks.net -port=80 -y add
   
   build-prod:
      <<: *build-stage
