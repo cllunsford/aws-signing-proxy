@@ -46,7 +46,7 @@ spec:
         name: ${APP_NAME}--proxy-pod
     spec:
       nodeSelector:
-        nodegroup: ${proxy_NODE_GROUP}
+        nodegroup: ${PROXY_NODE_GROUP}
       restartPolicy: Always
       containers:
       - name: ${APP_NAME}--proxy-container
