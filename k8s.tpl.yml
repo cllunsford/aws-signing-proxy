@@ -51,7 +51,7 @@ spec:
       containers:
       - name: ${APP_NAME}--proxy-container
         image: ${IMAGE_NAME}
-        command: ["./aws-signing-proxy"]
+        command: ["go-wrapper", "run"]
         ports:
         - name: http
           containerPort: 8000
