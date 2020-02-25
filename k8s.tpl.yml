@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${APP_NAME}--env
+data:
+
+  AWS_ACCESS_KEY_ID: "${PROXY_KIBANA_AWS_ACCESS_KEY_ID}"
+  AWS_SECRET_ACCESS_KEY: "${PROXY_KIBANA_AWS_SECRET_ACCESS_KEY}"
+  AWS_DEFAULT_REGION: "${PROXY_KIBANA_AWS_DEFAULT_REGION}"
+  GOLANG_DOWNLOAD_URL: "$(GOLANG_DOWNLOAD_URL)"
+
+  TARGET_URL: "$(TARGET_URL)"
+  LOGIN_USER: "$(LOGIN_USER)"
+  LOGIN_HASHED_PASSWORD: "$(LOGIN_HASHED_PASSWORD)"
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ${APP_NAME}--pod
+  labels:
+    app: ${APP_NAME}
+spec:
+  selector:
+    name: ${APP_NAME}--proxy-pod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: NodePort
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}--pod
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ${APP_NAME}--proxy-pod
+  template:
+    metadata:
+      labels:
+        name: ${APP_NAME}--proxy-pod
+    spec:
+      nodeSelector:
+        nodegroup: ${proxy_NODE_GROUP}
+      restartPolicy: Always
+      containers:
+      - name: ${APP_NAME}--proxy-container
+        image: ${IMAGE_NAME}
+        command: ["pipenv", "run", "gunicorn", "-c", "gunicorn.conf.py", "project.wsgi"]
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "800Mi"
+          limits:
+            cpu: "200m"
+            memory: "1024Mi"
+        envFrom:
+          - configMapRef:
+              name: ${APP_NAME}--env
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}--schedule
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: ${CONTAINER_SCHEDULE_REPLICAS}
+  selector:
+    matchLabels:
+      name: ${APP_NAME}--schedule-pod
+  template:
+    metadata:
+      labels:
+        name: ${APP_NAME}--schedule-pod
+    spec:
+      nodeSelector:
+        nodegroup: ${WORKER_NODE_GROUP}
+      restartPolicy: Always
+      containers:
+      - name: ${APP_NAME}--schedule-container
+        image: ${IMAGE_NAME}
+        command: ["pipenv", "run", "celery", "worker", "-A", "project", "--loglevel=info", "-Q", "schedule"]
+        resources:
+          requests:
+            cpu: "12m"
+            memory: "160Mi"
+          limits:
+            cpu: "19m"
+            memory: "180Mi"
+        envFrom:
+          - configMapRef:
+              name: ${APP_NAME}--env
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}--ninja
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: ${CONTAINER_NINJA_REPLICAS}
+  selector:
+    matchLabels:
+      name: ${APP_NAME}--ninja
+  template:
+    metadata:
+      labels:
+        name: ${APP_NAME}--ninja
+    spec:
+      nodeSelector:
+        nodegroup: ${WORKER_NODE_GROUP}
+      restartPolicy: Always
+      containers:
+      - name: ${APP_NAME}--ninja-container
+        image: ${IMAGE_NAME}
+        command: ["pipenv", "run", "celery", "worker", "-A", "project", "--loglevel=info", "-Q", "ninja"]
+        resources:
+          requests:
+            cpu: "20m"
+            memory: "210Mi"
+          limits:
+            cpu: "35m"
+            memory: "240Mi"
+        envFrom:
+          - configMapRef:
+              name: ${APP_NAME}--env
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}--downloads
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: ${CONTAINER_DOWNLOADS_REPLICAS}
+  selector:
+    matchLabels:
+      name: ${APP_NAME}--downloads-pod
+  template:
+    metadata:
+      labels:
+        name: ${APP_NAME}--downloads-pod
+    spec:
+      nodeSelector:
+        nodegroup: ${WORKER_NODE_GROUP}
+      restartPolicy: Always
+      containers:
+      - name: ${APP_NAME}--downloads-container
+        image: ${IMAGE_NAME}
+        command: ["pipenv", "run", "celery", "worker", "-A", "project", "--loglevel=info", "-Q", "downloads"]
+        resources:
+          requests:
+            cpu: "30m"
+            memory: "210Mi"
+          limits:
+            cpu: "450m"
+            memory: "230Mi"
+        envFrom:
+          - configMapRef:
+              name: ${APP_NAME}--env
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}--beat
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: ${CONTAINER_BEAT_REPLICAS}
+  selector:
+    matchLabels:
+      name: ${APP_NAME}--beat-pod
+  template:
+    metadata:
+      labels:
+        name: ${APP_NAME}--beat-pod
+    spec:
+      nodeSelector:
+        nodegroup: ${WORKER_NODE_GROUP}
+      restartPolicy: Always
+      containers:
+      - name: ${APP_NAME}--beat-container
+        image: ${IMAGE_NAME}
+        command: ["pipenv", "run", "celery", "beat", "-A", "project", "--loglevel=info"]
+        resources:
+          requests:
+            cpu: "2m"
+            memory: "70Mi"
+          limits:
+            cpu: "17m"
+            memory: "80Mi"
+        envFrom:
+          - configMapRef:
+              name: ${APP_NAME}--env

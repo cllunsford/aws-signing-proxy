@@ -1,0 +1,124 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.13
+  aws-ecr: circleci/aws-ecr@6.2.0
+  aws-eks: circleci/aws-eks@0.2.1
+
+jobs:
+  build-stage: &build-stage
+    working_directory: ~/aws-signing-proxy
+    docker:
+      - image: circleci/python:3.5.7
+    steps:
+      - checkout
+      - setup_remote_docker
+      - aws-ecr/build-image:
+          repo: admetricks/aws-signing-proxy
+          tag: "${CIRCLE_BRANCH}-${CIRCLE_SHA1}"
+      - aws-cli/install
+      - aws-ecr/ecr-login
+      - aws-ecr/push-image:
+          repo: admetricks/aws-signing-proxy
+          tag: "${CIRCLE_BRANCH}-${CIRCLE_SHA1}"
+  deploy-stage: &deploy-stage
+    working_directory: ~/aws-signing-proxy
+    executor: aws-eks/python3
+    environment:
+      - PROJECT_NAME: aws-signing-proxy
+      - WEB_NODE_GROUP: stage
+    steps:
+      - run:
+          name: Add bin to path
+          command: |
+            echo 'export PATH=$PATH:~/.local/bin' >> $BASH_ENV
+            echo 'export IMAGE_NAME=782873725436.dkr.ecr.us-east-1.amazonaws.com/admetricks/${PROJECT_NAME}:${CIRCLE_BRANCH}-${CIRCLE_SHA1}'  >> $BASH_ENV
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: admetricks
+          aws-region: us-east-1
+          install-kubectl: true
+      - run:
+          name: Set envars
+          command: echo 'export APP_NAME=${PROJECT_NAME}-${CIRCLE_BRANCH}' >> $BASH_ENV
+      - checkout
+      - run:
+          name: Deploy to Kubernetes
+          command: |
+            sudo apt update
+            sudo apt install -qq -y gettext
+            envsubst < ${HOME}/aws-signing-proxy/k8s.tpl.yml > ${HOME}/k8s.yml
+            kubectl apply -f ${HOME}/k8s.yml
+
+  ingress-stage: &ingress-stage
+    docker:
+      - image: opsmetricks/ingress-aws-cli
+    environment:
+      - PROJECT_NAME: aws-signing-proxy
+    steps:
+      - run:
+          name: Set envars
+          command: |
+            echo 'export APP_NAME=${PROJECT_NAME}-${CIRCLE_BRANCH}' >> $BASH_ENV
+      - run:
+          name: Adding Ingress rule
+          command: |
+            aws eks --region us-east-1 update-kubeconfig --name admetricks
+            /ingress_rules_editor -ingress=admetricks -service=${APP_NAME}--web -host=${APP_NAME}.eks.admetricks.net -port=80 -y add
+  
+  build-prod:
+     <<: *build-stage
+  
+  deploy-prod:
+    <<: *deploy-stage
+    environment:
+      - PROJECT_NAME: aws-signing-proxy
+      - WEB_NODE_GROUP: stage
+
+  ingress-prod:
+    <<: *ingress-stage
+
+workflows:
+  version: 2
+  test-build-deploy:
+    jobs:
+# ------------ STAGE ----------------
+      - build-stage:
+          context: aws-signing-proxy
+          filters:
+            branches:
+              ignore: master
+      - deploy-stage:
+          context: aws-signing-proxy
+          requires:
+            - build-stage
+          filters:
+            branches:
+              ignore: master
+      - ingress-stage:
+          context: aws-signing-proxy
+          requires:
+            - deploy-stage
+          filters:
+            branches:
+              ignore: master
+
+# ------------ PRODUCTION ------------
+      - build-prod:
+          context: aws-signing-proxy
+          filters:
+            branches:
+              only: master
+      - deploy-prod:
+          context: aws-signing-proxy
+          requires:
+            - build-prod
+          filters:
+            branches:
+              only: master
+      - ingress-prod:
+          context: aws-signing-proxy
+          requires:
+            - deploy-prod
+          filters:
+            branches:
+              only: master
