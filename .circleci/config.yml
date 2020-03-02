@@ -26,7 +26,7 @@ jobs:
     executor: aws-eks/python3
     environment:
       - PROJECT_NAME: aws-signing-proxy
-      - PROXY_NODE_GROUP: stage
+      - WEB_NODE_GROUP: main
     steps:
       - run:
           name: Add bin to path
@@ -72,7 +72,7 @@ jobs:
     <<: *deploy-stage
     environment:
       - PROJECT_NAME: aws-signing-proxy
-      - PROXY_NODE_GROUP: main
+      - WEB_NODE_GROUP: main
 
   ingress-prod:
     <<: *ingress-stage
