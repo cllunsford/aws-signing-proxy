@@ -27,7 +27,7 @@ type EnvConfig struct {
 	Target      string
 	Port        int         `default:"8080"`
 	Service     string      `default:"es"`
-	EnableCors  bool        `default:"false"`
+	EnableCors  bool        `envconfig:"enable_cors" default:"false"`
 	CorsOptions CorsOptions `envconfig:"cors_options"`
 }
 
