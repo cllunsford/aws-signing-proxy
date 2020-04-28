@@ -4,3 +4,14 @@ _pkg/
 _src/
 vendor/*
 !vendor/vendor.json
+
+# CA Bundle
+ca-certificates.crt
+
+# IDEs
+.idea
+
+# Env
+.tool-versions
+
+.env

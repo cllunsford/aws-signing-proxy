@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,9 +24,11 @@ import (
 )
 
 type EnvConfig struct {
-	Target  string
-	Port    int    `default:"8080"`
-	Service string `default:"es"`
+	Target      string
+	Port        int         `default:"8080"`
+	Service     string      `default:"es"`
+	EnableCors  bool        `default:"false"`
+	CorsOptions CorsOptions `envconfig:"cors_options"`
 }
 
 type AppConfig struct {
@@ -33,11 +36,20 @@ type AppConfig struct {
 	FlushInterval   time.Duration
 	IdleConnTimeout time.Duration
 	DialTimeout     time.Duration
+	EnableCors      bool
+	CorsOptions     CorsOptions
 }
 
-// NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
-func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) *httputil.ReverseProxy {
-	director := func(req *http.Request) {
+// Based on: https://github.com/rs/cors
+type CorsOptions struct {
+	// AllowedOrigins is a list of origins a cross-domain request can be executed from.
+	// If the special "*" value is present in the list, all origins will be allowed.
+	// Default value is ["*"]
+	AllowedOrigins []string `envconfig:"allowed_origins" default:"*"`
+}
+
+func newDirector(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) func(req *http.Request) {
+	return func(req *http.Request) {
 		// Rewrite request to desired server host
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
@@ -109,6 +121,11 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 			req.Header[k] = v
 		}
 	}
+}
+
+// NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
+func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) *httputil.ReverseProxy {
+	director := newDirector(target, creds, region, appConfig)
 
 	// transport is http.DefaultTransport but with the ability to override some
 	// timeouts
@@ -124,11 +141,20 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	return &httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Director:      director,
 		FlushInterval: appConfig.FlushInterval,
 		Transport:     transport,
 	}
+
+	if appConfig.EnableCors {
+		proxy.ModifyResponse = func(res *http.Response) error {
+			res.Header.Add("Access-Control-Allow-Origin", strings.Join(appConfig.CorsOptions.AllowedOrigins, ","))
+			return nil
+		}
+	}
+
+	return proxy
 }
 
 func main() {
@@ -148,6 +174,7 @@ func main() {
 	var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
 	var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
 	var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
+	var enableCors = flag.Bool("cors", e.EnableCors, "Whether or not to enable CORS on the responses")
 
 	flag.Parse()
 
@@ -156,6 +183,8 @@ func main() {
 		FlushInterval:   *flushInterval,
 		IdleConnTimeout: *idleConnTimeout,
 		DialTimeout:     *dialTimeout,
+		EnableCors:      *enableCors,
+		CorsOptions:     e.CorsOptions,
 	}
 
 	// Validate target URL
@@ -188,5 +217,7 @@ func main() {
 	proxy := NewSigningProxy(targetURL, creds, region, appC)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
-	http.ListenAndServe(listenString, proxy)
+	if err := http.ListenAndServe(listenString, proxy); err != nil {
+		panic(err)
+	}
 }

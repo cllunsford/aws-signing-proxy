@@ -23,12 +23,31 @@ General:
  * `-target` - AWS service to send requests to.  Required.
  * `-port` - Port for the proxy to LISTEN on (will forward to whatever port you specify in target), default: `8080`.
  * `-service` - The AWS service type you are sending to, default: `es`.  This is required for the signing process.
+ * `-cors` - Whether to enable CORS on the responses, if not present, default: `false`.
 
 HTTP Connection Tuning:
 
  * `-flush-interval` - [ReverseProxy](https://golang.org/pkg/net/http/httputil/#ReverseProxy) FlushInterval, default: `0`
  * `-idle-conn-timeout` - [Transport](https://golang.org/pkg/net/http/#Transport) Idle Connection Timeout, default: `90s`
  * `-dial-timeout` - [Transport](https://golang.org/pkg/net/http/#Transport) Dial Timeout, default: `30s`
+
+
+Environment
+
+The application can be configured through the environment in combination with flags for the
+following vars.
+
+General:
+
+ * `ASP_TARGET` - see `-target`
+ * `ASP_PORT` - see `-port`
+ * `ASP_SERVICE` - see `-service`
+ * `ASP_ENABLE_CORS` - see `-cors`
+
+CORS:
+
+ * `ASP_CORS_OPTIONS_ALLOWED_ORIGINS` - The list of origins to set in the response `Access-Control-Allow-Origin` header when CORS is enabled, default: `{"*"}`.
+
 
 ### Credential chain
 
