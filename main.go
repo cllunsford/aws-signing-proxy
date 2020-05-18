@@ -26,6 +26,7 @@ type EnvConfig struct {
 	Target  string
 	Port    int    `default:"8080"`
 	Service string `default:"es"`
+	EnableBodyLogging bool
 }
 
 type AppConfig struct {
@@ -36,7 +37,7 @@ type AppConfig struct {
 }
 
 // NewSigningProxy proxies requests to AWS services which require URL signing using the provided credentials
-func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig) *httputil.ReverseProxy {
+func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region string, appConfig AppConfig, enableBodyLogging bool) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		// Rewrite request to desired server host
 		req.URL.Scheme = target.Scheme
@@ -87,6 +88,10 @@ func NewSigningProxy(target *url.URL, creds *credentials.Credentials, region str
 				log.Printf("error reading request body: %v\n", err)
 			}
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+			if enableBodyLogging {
+				debugBody := ioutil.NopCloser(bytes.NewBuffer(buf))
+				log.Printf("incoming request with BODY: %q", debugBody)
+			}
 
 			awsReq.SetBufferBody(buf)
 		}
@@ -148,6 +153,7 @@ func main() {
 	var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
 	var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
 	var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
+	var enableBodyLogging = flag.Bool("enableBodyLogging", e.EnableBodyLogging, "Enable logging of the body")
 
 	flag.Parse()
 
@@ -185,7 +191,7 @@ func main() {
 	}
 
 	// Start the proxy server
-	proxy := NewSigningProxy(targetURL, creds, region, appC)
+	proxy := NewSigningProxy(targetURL, creds, region, appC, *enableBodyLogging)
 	listenString := fmt.Sprintf(":%v", *portFlag)
 	fmt.Printf("Listening on %v\n", listenString)
 	http.ListenAndServe(listenString, proxy)
