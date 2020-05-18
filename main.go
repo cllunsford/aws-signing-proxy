@@ -153,7 +153,7 @@ func main() {
 	var flushInterval = flag.Duration("flush-interval", 0, "Flush interval to flush to the client while copying the response body.")
 	var idleConnTimeout = flag.Duration("idle-conn-timeout", 90*time.Second, "the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. Zero means no limit.")
 	var dialTimeout = flag.Duration("dial-timeout", 30*time.Second, "The maximum amount of time a dial will wait for a connect to complete.")
-	var enableBodyLogging = flag.Bool("logging", e.EnableBodyLogging, "Enable logging of the body")
+	var enableBodyLogging = flag.Bool("enableBodyLogging", e.EnableBodyLogging, "Enable logging of the body")
 
 	flag.Parse()
 
