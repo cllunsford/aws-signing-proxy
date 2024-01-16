@@ -1,3 +1,11 @@
+# DO NOT USE
+This repo is now archived and will not be maintained anymore. If you need a mechanism like aws-signing-proxy, please do use and refer to the [official module](https://github.com/awslabs/aws-sigv4-proxy)
+
+---
+
+
+
+
 aws-signing-proxy
 =================
 [![Build Status](https://travis-ci.org/cllunsford/aws-signing-proxy.svg?branch=master)](https://travis-ci.org/cllunsford/aws-signing-proxy)
